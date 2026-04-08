@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Inventory System</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { text-align: center; }
+    .container { max-width: 800px; margin: auto; }
+    #reader { width: 100%; margin-bottom: 20px; }
+    form { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    input, select, textarea, button {
+      width: 100%; margin: 8px 0; padding: 10px; border-radius: 6px; border: 1px solid #ccc;
+    }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Inventory Scanner</h1>
+
+    <div id="reader"></div>
+
+    <form id="inventoryForm">
+      <input type="text" id="qrCode" placeholder="QR Code" readonly />
+      <input type="text" id="name" placeholder="Name" required />
+      <select id="category" required>
+        <option value="">Select Category</option>
+        <option>Bulk Living Furniture</option>
+        <option>Accent Furniture</option>
+        <option>Bedroom Furniture</option>
+        <option>Lighting and Mirrors</option>
+        <option>Art and Decor</option>
+        <option>Soft Goods/Textiles</option>
+        <option>Misc</option>
+      </select>
+      <select id="type" required>
+        <option value="">Select Type</option>
+        <option>Couches</option>
+        <option>Chairs</option>
+        <option>Benches</option>
+        <option>Dressers</option>
+        <option>Consoles</option>
+        <option>Dining Table</option>
+        <option>Bar Cart</option>
+        <option>Vases</option>
+        <option>Wall Art</option>
+        <option>Mirrors</option>
+        <option>Lamps/Lighting</option>
+        <option>Plants</option>
+        <option>Kitchenware</option>
+        <option>Books</option>
+        <option>Throw Pillows</option>
+        <option>Bedding</option>
+        <option>Throw Blanket</option>
+        <option>Rug</option>
+        <option>Misc Decor</option>
+      </select>
+      <select id="color" required>
+        <option value="">Select Color</option>
+        <option>Black</option>
+        <option>White</option>
+        <option>Grey</option>
+        <option>Red</option>
+        <option>Blue</option>
+        <option>Green</option>
+        <option>Yellow</option>
+        <option>Orange</option>
+        <option>Purple</option>
+        <option>Pink</option>
+        <option>Brown</option>
+        <option>Beige</option>
+      </select>
+      <select id="zone" required>
+        <option value="">Select Zone</option>
+        <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+        <option>F</option><option>G</option><option>H</option><option>I</option><option>J</option>
+        <option>K</option><option>L</option><option>M</option><option>N</option><option>O</option>
+        <option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
+        <option>U</option><option>V</option><option>W</option><option>X</option><option>Y</option><option>Z</option>
+      </select>
+      <select id="status" required>
+        <option value="">Select Status</option>
+        <option>Available</option>
+        <option>Out</option>
+        <option>Broken</option>
+        <option>Coming soon</option>
+      </select>
+      <textarea id="notes" placeholder="Notes (optional)"></textarea>
+      <button type="submit">Save Item</button>
+    </form>
+
+    <table id="inventoryTable">
+      <thead>
+        <tr>
+          <th>QR Code</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th>Item Color</th>
+          <th>Zone</th>
+          <th>Status</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById('inventoryForm');
+    const tableBody = document.querySelector('#inventoryTable tbody');
+
+    let inventory = [];
+
+    function onScanSuccess(decodedText) {
+      document.getElementById('qrCode').value = decodedText;
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    );
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const item = {
+        qr: document.getElementById('qrCode').value,
+        name: document.getElementById('name').value,
+        category: document.getElementById('category').value,
+        type: document.getElementById('type').value,
+        color: document.getElementById('color').value,
+        zone: document.getElementById('zone').value,
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value
+      };
+
+      // 🔁 SEND TO GOOGLE SHEETS (PASTE YOUR WEB APP URL BELOW)
+      await fetch("https://script.google.com/macros/s/AKfycbzXYdbMyHivO7s4B2JbAEMSreJHuuncp0INwuNcv0wvMt_JmTgcRM58GTiDOOmhejTBkA/exec", {
+        method: "POST",
+        body: JSON.stringify(item)
+      });
+
+      // Save locally as well
+      inventory.push(item);
+      renderTable();
+      form.reset();
+    });
+
+    function renderTable() {
+      tableBody.innerHTML = '';
+      inventory.forEach(item => {
+        const row = `<tr>
+          <td>${item.qr}</td>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>${item.type}</td>
+          <td>${item.color}</td>
+          <td>${item.zone}</td>
+          <td>${item.status}</td>
+          <td>${item.notes}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+      });
+    }
+  </script>
+</body>
+</html>
